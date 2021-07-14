@@ -178,20 +178,21 @@ testing_set_sun["True Label"] = testing_set_sun.apply(
 )
 
 # Testing set of last 2 years for SUN and SPY
-training_set_spy = df_spy.loc[df_spy["Year"] > 2017]
-training_set_spy["True Label"] = training_set_spy.apply(
+testing_set_spy = df_spy.loc[df_spy["Year"] > 2017]
+testing_set_spy["True Label"] = testing_set_spy.apply(
     lambda row: true_label(row), axis=1
 )
 
 # Function for predicting the next label
 def predict_next_label(w, df, ticker):
 
+    predictions = []
     d = 1
     index = df.index[0]
     num_correct = 0
     num_incorrect = 0
 
-    while index < len(df.index) + df.index[0]:
+    while index < len(df) + df.index[0]:
         # preventing key error from viewing indexs outside dataset (in beginning 3)
         if d < w:
             d = d + 1
@@ -233,6 +234,7 @@ def predict_next_label(w, df, ticker):
                     < chance_up[ticker][num_consecutive]["Neg"]
                 ):
                     prediction = "-"
+            predictions.append(prediction)
             # Preventing key error from trying to predict the next label outside the dataset
             if index + 1 < len(df.index) + df.index[0]:
                 if prediction == df.loc[index + 1]["True Label"]:
@@ -240,22 +242,27 @@ def predict_next_label(w, df, ticker):
                 else:
                     num_incorrect = num_incorrect + 1
     print("Accuracy = " + str(round((num_correct / len(df)) * 100, 2)) + "%")
+    return predictions
 
+
+# ===========================
+# Question #2
+# ===========================
 
 # ===========================
 # TESTING WITH SUN
 # ===========================
 
 print("For SUN with w=2")
-predict_next_label(w=2, df=testing_set_sun, ticker="SUN")
+sun_w_2_predictions = predict_next_label(w=2, df=testing_set_sun, ticker="SUN")
 print("------------------")
 
 print("For SUN with w=3")
-predict_next_label(w=3, df=testing_set_sun, ticker="SUN")
+sun_w_3_predictions = predict_next_label(w=3, df=testing_set_sun, ticker="SUN")
 print("------------------")
 
 print("For SUN with w=4")
-predict_next_label(w=4, df=testing_set_sun, ticker="SUN")
+sun_w_4_predictions = predict_next_label(w=4, df=testing_set_sun, ticker="SUN")
 print("------------------")
 
 # ===========================
@@ -263,13 +270,68 @@ print("------------------")
 # ===========================
 
 print("For SPY with w=2")
-predict_next_label(w=2, df=testing_set_sun, ticker="SPY")
+spy_w_2_predictions = predict_next_label(w=2, df=testing_set_spy, ticker="SPY")
 print("------------------")
 
 print("For SPY with w=3")
-predict_next_label(w=3, df=testing_set_sun, ticker="SPY")
+spy_w_3_predictions = predict_next_label(w=3, df=testing_set_spy, ticker="SPY")
 print("------------------")
 
 print("For SPY with w=4")
-predict_next_label(w=4, df=testing_set_sun, ticker="SPY")
+spy_w_4_predictions = predict_next_label(w=4, df=testing_set_spy, ticker="SPY")
 print("------------------")
+
+# ===========================
+# Question #3
+# ===========================
+
+# Creating a new DF to hold values for ensemble learning
+# I have to subsplice the lists so they will have the same lengths
+ensemble_df_sun = pd.DataFrame(
+    {
+        "w=2": sun_w_2_predictions[2:],
+        "w=3": sun_w_3_predictions[1:],
+        "w=4": sun_w_4_predictions,
+    }
+)
+ensemble_df_spy = pd.DataFrame(
+    {
+        "w=2": spy_w_2_predictions[2:],
+        "w=3": spy_w_3_predictions[1:],
+        "w=4": spy_w_4_predictions,
+    }
+)
+
+def ensemble_learning(ensemble_df, testing_df):
+
+    num_pos_correct = 0
+    num_neg_correct = 0
+    num_pos_incorrect = 0
+    num_neg_incorrect = 0
+
+    # Starting at day 3 because there are no predictions for days 1 and 2
+    starting_day = 3
+
+    # Looping through and checking ensemble prediction to actual
+    for index, row in ensemble_df.iterrows():
+        avg_symbol = row.value_counts().idxmax()
+        if avg_symbol == testing_df.iloc[starting_day + index]["True Label"]:
+            if avg_symbol == "+":
+                num_pos_correct = num_pos_correct + 1
+            else:
+                num_neg_correct = num_neg_correct + 1
+        else:
+            if avg_symbol == "+":
+                num_pos_incorrect = num_pos_incorrect + 1
+            else:
+                num_neg_incorrect = num_neg_incorrect + 1
+    print("Correct    (pos:neg) -- " + str(num_pos_correct) + ":" + str(num_neg_correct))
+    print("Incorrect  (pos:neg) -- " + str(num_pos_incorrect) + ":" + str(num_neg_incorrect))
+
+
+print("For ensemble learning with SUN:")
+ensemble_learning(ensemble_df_sun, testing_set_sun)
+print("For ensemble learning with SPY:")
+ensemble_learning(ensemble_df_spy, testing_set_spy)
+
+
