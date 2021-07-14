@@ -11,7 +11,8 @@ import os
 import math
 
 # Ticker file location
-ticker_file = r"data\\SUN.csv"
+ticker_file_sun = r"data\\SUN.csv"
+ticker_file_spy = r"data\\SPY.csv"
 
 # Function for computing True Labal
 def true_label(row):
@@ -26,13 +27,22 @@ def true_label(row):
 # ======================
 
 # Reading csv into dataframe
-df = pd.read_csv(ticker_file)
+df_sun = pd.read_csv(ticker_file_sun)
+df_spy = pd.read_csv(ticker_file_spy)
 
-# Grabbing training subset of first 3 years
-training_set = df.loc[df["Year"] < 2019]
-training_set["True Label"] = training_set.apply(lambda row: true_label(row), axis=1)
+# Grabbing SUN training subset of first 3 years
+training_set_sun = df_sun.loc[df_sun["Year"] < 2019]
+training_set_sun["True Label"] = training_set_sun.apply(
+    lambda row: true_label(row), axis=1
+)
 
+# Grabbing SPY training subset of first 3 years
+training_set_spy = df_spy.loc[df_spy["Year"] < 2018]
+training_set_spy["True Label"] = training_set_spy.apply(
+    lambda row: true_label(row), axis=1
+)
 
+# Function for computing the negative probability
 def get_negative_probability(df, k):
     # Consecutive count
     count = 0
@@ -82,50 +92,100 @@ def get_positive_probability(df, k):
                 count = 0
     return num_pos, num_neg
 
+
 chance_down = {
-    1: {"Pos": None, "Neg": None},
-    2: {"Pos": None, "Neg": None},
-    3: {"Pos": None, "Neg": None},
+    "SUN": {
+        1: {"Pos": None, "Neg": None},
+        2: {"Pos": None, "Neg": None},
+        3: {"Pos": None, "Neg": None},
+    },
+    "SPY": {
+        1: {"Pos": None, "Neg": None},
+        2: {"Pos": None, "Neg": None},
+        3: {"Pos": None, "Neg": None},
+    },
+}
+chance_up = {
+    "SUN": {
+        1: {"Pos": None, "Neg": None},
+        2: {"Pos": None, "Neg": None},
+        3: {"Pos": None, "Neg": None},
+    },
+    "SPY": {
+        1: {"Pos": None, "Neg": None},
+        2: {"Pos": None, "Neg": None},
+        3: {"Pos": None, "Neg": None},
+    },
 }
 
+# =======================================
+# Populating the probability dictionaries
+# =======================================
+
+print("SUN")
+print("======================")
 print("Probability after seeing k consecutive 'down days'")
 for k in range(1, 4):
-    num_pos, num_neg = get_negative_probability(training_set, k)
-    print("======================")
-    print("For k=" + str(k))
-    print("Probability = " + str(num_pos) + ":" + str(num_neg))
-    chance_down[k]["Pos"] = num_pos
-    chance_down[k]["Neg"] = num_neg
-
-chance_up = {
-    1: {"Pos": None, "Neg": None},
-    2: {"Pos": None, "Neg": None},
-    3: {"Pos": None, "Neg": None},
-}
-
-print("Probability after seeing k consecutive 'up days'")
-for k in range(1, 4):
-    num_pos, num_neg = get_positive_probability(training_set, k)
+    num_pos, num_neg = get_negative_probability(training_set_sun, k)
     print("======================")
     print("For k=" + str(k))
     print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
-    chance_up[k]["Pos"] = num_pos
-    chance_up[k]["Neg"] = num_neg
+    chance_down["SUN"][k]["Pos"] = num_pos
+    chance_down["SUN"][k]["Neg"] = num_neg
+
+print("======================")
+print("Probability after seeing k consecutive 'up days'")
+for k in range(1, 4):
+    num_pos, num_neg = get_positive_probability(training_set_sun, k)
+    print("======================")
+    print("For k=" + str(k))
+    print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
+    chance_up["SUN"][k]["Pos"] = num_pos
+    chance_up["SUN"][k]["Neg"] = num_neg
+
+print("SPY")
+print("======================")
+print("Probability after seeing k consecutive 'down days'")
+for k in range(1, 4):
+    num_pos, num_neg = get_negative_probability(training_set_spy, k)
+    print("======================")
+    print("For k=" + str(k))
+    print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
+    chance_down["SPY"][k]["Pos"] = num_pos
+    chance_down["SPY"][k]["Neg"] = num_neg
+
+print("======================")
+print("Probability after seeing k consecutive 'up days'")
+for k in range(1, 4):
+    num_pos, num_neg = get_positive_probability(training_set_spy, k)
+    print("======================")
+    print("For k=" + str(k))
+    print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
+    chance_up["SPY"][k]["Pos"] = num_pos
+    chance_up["SPY"][k]["Neg"] = num_neg
 
 # =================
 # Predicting Labels
 # =================
-print("=================")
+print("=================================================")
 print("Predicting Labels")
-print("=================")
+print("=================================================")
 
+# Testing set of last 2 years for SUN and SPY
+testing_set_sun = df_sun.loc[df_sun["Year"] > 2018]
+testing_set_sun["True Label"] = testing_set_sun.apply(
+    lambda row: true_label(row), axis=1
+)
 
-# Testing set of last 2 years
-testing_set = df.loc[df["Year"] > 2018]
-testing_set["True Label"] = testing_set.apply(lambda row: true_label(row), axis=1)
+# Testing set of last 2 years for SUN and SPY
+training_set_spy = df_spy.loc[df_spy["Year"] > 2017]
+training_set_spy["True Label"] = training_set_spy.apply(
+    lambda row: true_label(row), axis=1
+)
 
-def predict_next_label(w, df):
-    
+# Function for predicting the next label
+def predict_next_label(w, df, ticker):
+
     d = 1
     index = df.index[0]
     num_correct = 0
@@ -137,29 +197,41 @@ def predict_next_label(w, df):
             d = d + 1
             index = index + 1
         else:
-            # generating sequence of last 3 labels, including current day d
-            s = [None] * w
-            for i in range(w):
+            # generating sequence of last w labels, including current day d
+            s = [None] * (w - 1)
+            for i in range(w - 1):
                 s[i] = df.loc[index - i]["True Label"]
             index = index + 1
             symbol = s[-1]
             num_consecutive = 1
             prediction = None
             # calculating the number of consecutive labels
-            for i in range(1, w):
+            for i in range(1, (w - 1)):
                 if s[-1 - i] == symbol and num_consecutive == i:
                     num_consecutive = num_consecutive + 1
             if symbol == "-":
                 # compare to chance_down
-                if chance_down[num_consecutive]["Pos"] >= chance_down[num_consecutive]["Neg"]:
+                if (
+                    chance_down[ticker][num_consecutive]["Pos"]
+                    >= chance_down[ticker][num_consecutive]["Neg"]
+                ):
                     prediction = "+"
-                elif chance_down[num_consecutive]["Pos"] < chance_down[num_consecutive]["Neg"]:
+                elif (
+                    chance_down[ticker][num_consecutive]["Pos"]
+                    < chance_down[ticker][num_consecutive]["Neg"]
+                ):
                     prediction = "-"
             elif symbol == "+":
                 # compare to chance_up
-                if chance_up[num_consecutive]["Pos"] >= chance_up[num_consecutive]["Neg"]:
+                if (
+                    chance_up[ticker][num_consecutive]["Pos"]
+                    >= chance_up[ticker][num_consecutive]["Neg"]
+                ):
                     prediction = "+"
-                elif chance_up[num_consecutive]["Pos"] < chance_up[num_consecutive]["Neg"]:
+                elif (
+                    chance_up[ticker][num_consecutive]["Pos"]
+                    < chance_up[ticker][num_consecutive]["Neg"]
+                ):
                     prediction = "-"
             # Preventing key error from trying to predict the next label outside the dataset
             if index + 1 < len(df.index) + df.index[0]:
@@ -170,16 +242,34 @@ def predict_next_label(w, df):
     print("Accuracy = " + str(round((num_correct / len(df)) * 100, 2)) + "%")
 
 
-print("For SUN with w=3")
-predict_next_label(w=3, df=testing_set)
-print("------------------")
+# ===========================
+# TESTING WITH SUN
+# ===========================
 
 print("For SUN with w=2")
-predict_next_label(w=2, df=testing_set)
+predict_next_label(w=2, df=testing_set_sun, ticker="SUN")
 print("------------------")
 
-print("For SUN with w=1")
-predict_next_label(w=1, df=testing_set)
+print("For SUN with w=3")
+predict_next_label(w=3, df=testing_set_sun, ticker="SUN")
 print("------------------")
 
+print("For SUN with w=4")
+predict_next_label(w=4, df=testing_set_sun, ticker="SUN")
+print("------------------")
 
+# ===========================
+# TESTING WITH SPY
+# ===========================
+
+print("For SPY with w=2")
+predict_next_label(w=2, df=testing_set_sun, ticker="SPY")
+print("------------------")
+
+print("For SPY with w=3")
+predict_next_label(w=3, df=testing_set_sun, ticker="SPY")
+print("------------------")
+
+print("For SPY with w=4")
+predict_next_label(w=4, df=testing_set_sun, ticker="SPY")
+print("------------------")
