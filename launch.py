@@ -10,6 +10,7 @@ import pandas as pd
 import os
 import math
 
+# Ticker file location
 ticker_file = r"data\\SUN.csv"
 
 # Function for computing True Labal
@@ -22,9 +23,11 @@ def true_label(row):
 # ======================
 # Main program execution
 # ======================
+
+# Reading csv into dataframe
 df = pd.read_csv(ticker_file)
 
-
+# Grabbing training subset
 training_set = df.loc[df['Year'] < 2019]
 training_set["True Label"] = training_set.apply (lambda row: true_label(row), axis=1)
 
@@ -52,7 +55,6 @@ def get_negative_probability(df, k):
                 count = 0
     return num_pos, num_neg
 
-print("======")
 for k in range(1,4):
     num_pos, num_neg = get_negative_probability(training_set, k)
     print("======================")
