@@ -289,6 +289,7 @@ print("------------------")
 def calculate_ensemble(row):
     return row.value_counts().idxmax()
 
+
 def print_ensemble_stats(ensemble_df, testing_df):
 
     starting_day = 3
@@ -310,8 +311,16 @@ def print_ensemble_stats(ensemble_df, testing_df):
                 num_neg_correct = num_neg_correct + 1
             else:
                 num_neg_incorrect = num_neg_incorrect + 1
-    print("Correct    (pos:neg) -- " + str(num_pos_correct) + ":" + str(num_neg_correct))
-    print("Incorrect  (pos:neg) -- " + str(num_pos_incorrect) + ":" + str(num_neg_incorrect))
+    print(
+        "Correct    (pos:neg) -- " + str(num_pos_correct) + ":" + str(num_neg_correct)
+    )
+    print(
+        "Incorrect  (pos:neg) -- "
+        + str(num_pos_incorrect)
+        + ":"
+        + str(num_neg_incorrect)
+    )
+
 
 # Creating a new DF to hold values for ensemble learning
 # I have to subsplice the lists so they will have the same lengths
@@ -345,14 +354,12 @@ print_ensemble_stats(ensemble_df_spy, testing_set_spy)
 # Question #4
 # ===========================
 
-# def calculate_stats():
-#     statistics = {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
+
+def calculate_stats():
+
+    df = pd.DataFrame({"TP": ["0"], "FP": ["0"], "TN": ["0"], "FN": ["0"], "accuracy": ["0"], "TPR": ["0"], "TNR": ["0"]})
+    df.index = ["w=2"]#, "w=3", "w=4", "ensemble"]
+    print(df)
 
 
-
-
-
-
-
-
-
+calculate_stats()
