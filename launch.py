@@ -285,6 +285,34 @@ print("------------------")
 # Question #3
 # ===========================
 
+# Method for computing the most common label for w=2,3,4
+def calculate_ensemble(row):
+    return row.value_counts().idxmax()
+
+def print_ensemble_stats(ensemble_df, testing_df):
+
+    starting_day = 3
+
+    num_pos_correct = 0
+    num_neg_correct = 0
+    num_pos_incorrect = 0
+    num_neg_incorrect = 0
+
+    for index, row in ensemble_df.iterrows():
+        symbol = row["ensemble"]
+        if symbol == "+":
+            if symbol == testing_df.iloc[starting_day + index]["True Label"]:
+                num_pos_correct = num_pos_correct + 1
+            else:
+                num_pos_incorrect = num_pos_incorrect + 1
+        else:
+            if symbol == testing_df.iloc[starting_day + index]["True Label"]:
+                num_neg_correct = num_neg_correct + 1
+            else:
+                num_neg_incorrect = num_neg_incorrect + 1
+    print("Correct    (pos:neg) -- " + str(num_pos_correct) + ":" + str(num_neg_correct))
+    print("Incorrect  (pos:neg) -- " + str(num_pos_incorrect) + ":" + str(num_neg_incorrect))
+
 # Creating a new DF to hold values for ensemble learning
 # I have to subsplice the lists so they will have the same lengths
 ensemble_df_sun = pd.DataFrame(
@@ -294,6 +322,9 @@ ensemble_df_sun = pd.DataFrame(
         "w=4": sun_w_4_predictions,
     }
 )
+ensemble_df_sun["ensemble"] = ensemble_df_sun.apply(
+    lambda row: calculate_ensemble(row), axis=1
+)
 ensemble_df_spy = pd.DataFrame(
     {
         "w=2": spy_w_2_predictions[2:],
@@ -301,37 +332,27 @@ ensemble_df_spy = pd.DataFrame(
         "w=4": spy_w_4_predictions,
     }
 )
+ensemble_df_spy["ensemble"] = ensemble_df_spy.apply(
+    lambda row: calculate_ensemble(row), axis=1
+)
 
-def ensemble_learning(ensemble_df, testing_df):
-
-    num_pos_correct = 0
-    num_neg_correct = 0
-    num_pos_incorrect = 0
-    num_neg_incorrect = 0
-
-    # Starting at day 3 because there are no predictions for days 1 and 2
-    starting_day = 3
-
-    # Looping through and checking ensemble prediction to actual
-    for index, row in ensemble_df.iterrows():
-        avg_symbol = row.value_counts().idxmax()
-        if avg_symbol == testing_df.iloc[starting_day + index]["True Label"]:
-            if avg_symbol == "+":
-                num_pos_correct = num_pos_correct + 1
-            else:
-                num_neg_correct = num_neg_correct + 1
-        else:
-            if avg_symbol == "+":
-                num_pos_incorrect = num_pos_incorrect + 1
-            else:
-                num_neg_incorrect = num_neg_incorrect + 1
-    print("Correct    (pos:neg) -- " + str(num_pos_correct) + ":" + str(num_neg_correct))
-    print("Incorrect  (pos:neg) -- " + str(num_pos_incorrect) + ":" + str(num_neg_incorrect))
+print("== Ensemble for SUN ==")
+print_ensemble_stats(ensemble_df_sun, testing_set_sun)
+print_ensemble_stats(ensemble_df_spy, testing_set_spy)
 
 
-print("For ensemble learning with SUN:")
-ensemble_learning(ensemble_df_sun, testing_set_sun)
-print("For ensemble learning with SPY:")
-ensemble_learning(ensemble_df_spy, testing_set_spy)
+# ===========================
+# Question #4
+# ===========================
+
+# def calculate_stats():
+#     statistics = {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
+
+
+
+
+
+
+
 
 
