@@ -183,6 +183,8 @@ testing_set_spy["True Label"] = testing_set_spy.apply(
     lambda row: true_label(row), axis=1
 )
 
+accuracy_dict = {"SUN": {}, "SPY": {}}
+
 # Function for predicting the next label
 def predict_next_label(w, df, ticker):
 
@@ -241,7 +243,9 @@ def predict_next_label(w, df, ticker):
                     num_correct = num_correct + 1
                 else:
                     num_incorrect = num_incorrect + 1
-    print("Accuracy = " + str(round((num_correct / len(df)) * 100, 2)) + "%")
+    accuracy = round((num_correct / len(df)) * 100, 2)
+    print("Accuracy = " + str(accuracy) + "%")
+    accuracy_dict[ticker]["w=" + str(w)] = accuracy
     return predictions
 
 
@@ -290,7 +294,7 @@ def calculate_ensemble(row):
     return row.value_counts().idxmax()
 
 
-def print_ensemble_stats(ensemble_df, testing_df):
+def ensemble_stats(ensemble_df, testing_df, ticker):
 
     starting_day = 3
 
@@ -311,6 +315,9 @@ def print_ensemble_stats(ensemble_df, testing_df):
                 num_neg_correct = num_neg_correct + 1
             else:
                 num_neg_incorrect = num_neg_incorrect + 1
+    total = num_pos_correct + num_neg_correct + num_pos_incorrect + num_neg_incorrect
+    accuracy = round(((num_pos_correct + num_neg_correct) / total) * 100, 2)
+    accuracy_dict[ticker]["ensemble"] = accuracy
     print(
         "Correct    (pos:neg) -- " + str(num_pos_correct) + ":" + str(num_neg_correct)
     )
@@ -320,6 +327,7 @@ def print_ensemble_stats(ensemble_df, testing_df):
         + ":"
         + str(num_neg_incorrect)
     )
+    print("Accuracy             -- " + str(accuracy) + "%")
 
 
 # Creating a new DF to hold values for ensemble learning
@@ -346,20 +354,74 @@ ensemble_df_spy["ensemble"] = ensemble_df_spy.apply(
 )
 
 print("== Ensemble for SUN ==")
-print_ensemble_stats(ensemble_df_sun, testing_set_sun)
-print_ensemble_stats(ensemble_df_spy, testing_set_spy)
-
+ensemble_stats(ensemble_df_sun, testing_set_sun, "SUN")
+print("== Ensemble for SPY ==")
+ensemble_stats(ensemble_df_spy, testing_set_spy, "SPY")
 
 # ===========================
 # Question #4
 # ===========================
 
+def calculate_stats(ensemble_df, testing_df, ticker):
 
-def calculate_stats():
+    rows = ["w=2", "w=3", "w=4", "ensemble"]
 
-    df = pd.DataFrame({"TP": ["0"], "FP": ["0"], "TN": ["0"], "FN": ["0"], "accuracy": ["0"], "TPR": ["0"], "TNR": ["0"]})
-    df.index = ["w=2"]#, "w=3", "w=4", "ensemble"]
+    starting_day = 3
+
+    tp = []
+    fp = []
+    tn = []
+    fn = []
+
+    num_pos_correct = 0
+    num_neg_correct = 0
+    num_pos_incorrect = 0
+    num_neg_incorrect = 0
+
+    for item in rows:
+        for index, row in ensemble_df.iterrows():
+            symbol = row[item]
+            if symbol == "+":
+                if symbol == testing_df.iloc[starting_day + index]["True Label"]:
+                    num_pos_correct = num_pos_correct + 1
+                else:
+                    num_pos_incorrect = num_pos_incorrect + 1
+            else:
+                if symbol == testing_df.iloc[starting_day + index]["True Label"]:
+                    num_neg_correct = num_neg_correct + 1
+                else:
+                    num_neg_incorrect = num_neg_incorrect + 1
+        tp.append(num_pos_correct)
+        fp.append(num_pos_incorrect)
+        tn.append(num_neg_correct)
+        fn.append(num_neg_incorrect)
+        num_pos_correct = 0
+        num_neg_correct = 0
+        num_pos_incorrect = 0
+        num_neg_incorrect = 0
+    tpr = [None, None, None, None]
+    tnr = [None, None, None, None]
+    df = pd.DataFrame(
+        {
+            "TP": tp,
+            "FP": fp,
+            "TN": tn,
+            "FN": fn,
+            "accuracy": [
+                accuracy_dict[ticker]["w=2"],
+                accuracy_dict[ticker]["w=3"],
+                accuracy_dict[ticker]["w=4"],
+                accuracy_dict[ticker]["ensemble"],
+            ],
+            "TPR": tpr,
+            "TNR": tnr,
+        }
+    )
+    df.index = rows
     print(df)
 
-
-calculate_stats()
+# Final tables
+print("========== SUN ==========")
+calculate_stats(ensemble_df_sun, testing_set_sun, "SUN")
+print("========== SPY ==========")
+calculate_stats(ensemble_df_spy, testing_set_spy, "SPY")
