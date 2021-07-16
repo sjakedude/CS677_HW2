@@ -9,6 +9,7 @@ to analyze the stock data for 2 tickers, SUN and SPY.
 import pandas as pd
 import os
 import math
+import ast
 
 # Ticker file location
 ticker_file_sun = r"data\\SUN.csv"
@@ -92,32 +93,6 @@ def get_positive_probability(df, k):
                 count = 0
     return num_pos, num_neg
 
-
-chance_down = {
-    "SUN": {
-        1: {"Pos": None, "Neg": None},
-        2: {"Pos": None, "Neg": None},
-        3: {"Pos": None, "Neg": None},
-    },
-    "SPY": {
-        1: {"Pos": None, "Neg": None},
-        2: {"Pos": None, "Neg": None},
-        3: {"Pos": None, "Neg": None},
-    },
-}
-chance_up = {
-    "SUN": {
-        1: {"Pos": None, "Neg": None},
-        2: {"Pos": None, "Neg": None},
-        3: {"Pos": None, "Neg": None},
-    },
-    "SPY": {
-        1: {"Pos": None, "Neg": None},
-        2: {"Pos": None, "Neg": None},
-        3: {"Pos": None, "Neg": None},
-    },
-}
-
 # =======================================
 # Populating the probability dictionaries
 # =======================================
@@ -130,8 +105,6 @@ for k in range(1, 4):
     print("======================")
     print("For k=" + str(k))
     print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
-    chance_down["SUN"][k]["Pos"] = num_pos
-    chance_down["SUN"][k]["Neg"] = num_neg
 
 print("======================")
 print("Probability after seeing k consecutive 'up days'")
@@ -140,8 +113,6 @@ for k in range(1, 4):
     print("======================")
     print("For k=" + str(k))
     print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
-    chance_up["SUN"][k]["Pos"] = num_pos
-    chance_up["SUN"][k]["Neg"] = num_neg
 
 print("SPY")
 print("======================")
@@ -151,8 +122,6 @@ for k in range(1, 4):
     print("======================")
     print("For k=" + str(k))
     print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
-    chance_down["SPY"][k]["Pos"] = num_pos
-    chance_down["SPY"][k]["Neg"] = num_neg
 
 print("======================")
 print("Probability after seeing k consecutive 'up days'")
@@ -161,8 +130,6 @@ for k in range(1, 4):
     print("======================")
     print("For k=" + str(k))
     print("Probability (pos:neg) = " + str(num_pos) + ":" + str(num_neg))
-    chance_up["SPY"][k]["Pos"] = num_pos
-    chance_up["SPY"][k]["Neg"] = num_neg
 
 # =================
 # Predicting Labels
@@ -185,65 +152,85 @@ testing_set_spy["True Label"] = testing_set_spy.apply(
 
 accuracy_dict = {"SUN": {}, "SPY": {}}
 
+
+def get_training_dict(df, w):
+    w_dict = {}
+    w_reducted_dict = {}
+    d = 1
+
+    # Slide the window of size w
+    for index, row in df.iterrows():
+        # avoiding index error
+        if index == len(df) - 1:
+            break
+        if d < w:
+            d = d + 1
+            index = index + 1
+        else:
+            s = [None] * w
+            for i in range(w):
+                s[i] = df.loc[d - w + i]["True Label"]
+            # create key in w_dict if doesnt exist
+            if w_dict.get(str(s), None) == None:
+                w_dict[str(s)] = []
+            w_dict[str(s)].append(df.loc[index + 1]["True Label"])
+    for key in w_dict.keys():
+        num_pos = 0
+        num_neg = 0
+        items = ast.literal_eval(key)
+        new_key = ""
+        for i in items:
+            new_key = new_key + i
+        for value in w_dict[key]:
+            if value == "+":
+                num_pos = num_pos + 1
+            else:
+                num_neg = num_neg + 1
+        if num_pos > num_neg:
+            w_reducted_dict[new_key] = "+"
+        elif num_neg > num_pos:
+            w_reducted_dict[new_key] = "-"
+        else:
+            w_reducted_dict[new_key] = "+"
+
+    return w_reducted_dict
+
 # Function for predicting the next label
-def predict_next_label(w, df, ticker):
+def predict_next_label(w, testing_df, training_df, ticker):
+
+    training_w = get_training_dict(training_df, w)
 
     predictions = []
     d = 1
-    index = df.index[0]
+    index = testing_df.index[0]
     num_correct = 0
     num_incorrect = 0
 
-    while index < len(df) + df.index[0]:
+    while index < len(testing_df) + testing_df.index[0]:
         # preventing key error from viewing indexs outside dataset (in beginning 3)
         if d < w:
             d = d + 1
             index = index + 1
         else:
             # generating sequence of last w labels, including current day d
-            s = [None] * (w - 1)
-            for i in range(w - 1):
-                s[i] = df.loc[index - i]["True Label"]
+            s = [None] * (w)
+            for i in range(w):
+                s[i] = testing_df.loc[index - i]["True Label"]
             index = index + 1
             symbol = s[-1]
             num_consecutive = 1
-            prediction = None
-            # calculating the number of consecutive labels
-            for i in range(1, (w - 1)):
-                if s[-1 - i] == symbol and num_consecutive == i:
-                    num_consecutive = num_consecutive + 1
-            if symbol == "-":
-                # compare to chance_down
-                if (
-                    chance_down[ticker][num_consecutive]["Pos"]
-                    >= chance_down[ticker][num_consecutive]["Neg"]
-                ):
-                    prediction = "+"
-                elif (
-                    chance_down[ticker][num_consecutive]["Pos"]
-                    < chance_down[ticker][num_consecutive]["Neg"]
-                ):
-                    prediction = "-"
-            elif symbol == "+":
-                # compare to chance_up
-                if (
-                    chance_up[ticker][num_consecutive]["Pos"]
-                    >= chance_up[ticker][num_consecutive]["Neg"]
-                ):
-                    prediction = "+"
-                elif (
-                    chance_up[ticker][num_consecutive]["Pos"]
-                    < chance_up[ticker][num_consecutive]["Neg"]
-                ):
-                    prediction = "-"
+            key = ""
+            for i in s:
+                key = key + i
+            prediction = training_w.get(key, "+") # default to + if we cannot find key
             predictions.append(prediction)
             # Preventing key error from trying to predict the next label outside the dataset
-            if index + 1 < len(df.index) + df.index[0]:
-                if prediction == df.loc[index + 1]["True Label"]:
+            if index + 1 < len(testing_df.index) + testing_df.index[0]:
+                if prediction == testing_df.loc[index + 1]["True Label"]:
                     num_correct = num_correct + 1
                 else:
                     num_incorrect = num_incorrect + 1
-    accuracy = round((num_correct / len(df)) * 100, 2)
+    accuracy = round((num_correct / len(testing_df)) * 100, 2)
     print("Accuracy = " + str(accuracy) + "%")
     accuracy_dict[ticker]["w=" + str(w)] = accuracy
     return predictions
@@ -258,15 +245,15 @@ def predict_next_label(w, df, ticker):
 # ===========================
 
 print("For SUN with w=2")
-sun_w_2_predictions = predict_next_label(w=2, df=testing_set_sun, ticker="SUN")
+sun_w_2_predictions = predict_next_label(w=2, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN")
 print("------------------")
 
 print("For SUN with w=3")
-sun_w_3_predictions = predict_next_label(w=3, df=testing_set_sun, ticker="SUN")
+sun_w_3_predictions = predict_next_label(w=3, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN")
 print("------------------")
 
 print("For SUN with w=4")
-sun_w_4_predictions = predict_next_label(w=4, df=testing_set_sun, ticker="SUN")
+sun_w_4_predictions = predict_next_label(w=4, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN")
 print("------------------")
 
 # ===========================
@@ -274,16 +261,17 @@ print("------------------")
 # ===========================
 
 print("For SPY with w=2")
-spy_w_2_predictions = predict_next_label(w=2, df=testing_set_spy, ticker="SPY")
+spy_w_2_predictions = predict_next_label(w=2, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY")
 print("------------------")
 
 print("For SPY with w=3")
-spy_w_3_predictions = predict_next_label(w=3, df=testing_set_spy, ticker="SPY")
+spy_w_3_predictions = predict_next_label(w=3, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY")
 print("------------------")
 
 print("For SPY with w=4")
-spy_w_4_predictions = predict_next_label(w=4, df=testing_set_spy, ticker="SPY")
+spy_w_4_predictions = predict_next_label(w=4, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY")
 print("------------------")
+exit()
 
 # ===========================
 # Question #3
@@ -362,6 +350,7 @@ ensemble_stats(ensemble_df_spy, testing_set_spy, "SPY")
 # Question #4
 # ===========================
 
+
 def calculate_stats(ensemble_df, testing_df, ticker):
 
     rows = ["w=2", "w=3", "w=4", "ensemble"]
@@ -372,6 +361,8 @@ def calculate_stats(ensemble_df, testing_df, ticker):
     fp = []
     tn = []
     fn = []
+    tpr = []
+    tnr = []
 
     num_pos_correct = 0
     num_neg_correct = 0
@@ -395,12 +386,12 @@ def calculate_stats(ensemble_df, testing_df, ticker):
         fp.append(num_pos_incorrect)
         tn.append(num_neg_correct)
         fn.append(num_neg_incorrect)
+        tpr.append(num_pos_correct / (num_neg_correct + num_pos_incorrect))
+        tnr.append(num_neg_correct / (num_neg_correct + num_pos_incorrect))
         num_pos_correct = 0
         num_neg_correct = 0
         num_pos_incorrect = 0
         num_neg_incorrect = 0
-    tpr = [None, None, None, None]
-    tnr = [None, None, None, None]
     df = pd.DataFrame(
         {
             "TP": tp,
@@ -419,6 +410,7 @@ def calculate_stats(ensemble_df, testing_df, ticker):
     )
     df.index = rows
     print(df)
+
 
 # Final tables
 print("========== SUN ==========")
