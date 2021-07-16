@@ -433,8 +433,8 @@ def calculate_stats(ensemble_df, testing_df, ticker):
         fp.append(num_pos_incorrect)
         tn.append(num_neg_correct)
         fn.append(num_neg_incorrect)
-        tpr.append(num_pos_correct / (num_neg_correct + num_pos_incorrect))
-        tnr.append(num_neg_correct / (num_neg_correct + num_pos_incorrect))
+        tpr.append(round(num_pos_correct / (num_neg_correct + num_pos_incorrect), 2))
+        tnr.append(round(num_neg_correct / (num_neg_correct + num_pos_incorrect), 2))
         num_pos_correct = 0
         num_neg_correct = 0
         num_pos_incorrect = 0
