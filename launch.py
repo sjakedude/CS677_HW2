@@ -93,6 +93,7 @@ def get_positive_probability(df, k):
                 count = 0
     return num_pos, num_neg
 
+
 # =======================================
 # Populating the probability dictionaries
 # =======================================
@@ -155,23 +156,21 @@ accuracy_dict = {"SUN": {}, "SPY": {}}
 
 def get_training_dict(df, w):
     w_dict = {}
-    w_reducted_dict = {}
-    d = 1
+    w_reduced_dict = {}
 
     # Slide the window of size w
     for index, row in df.iterrows():
         # avoiding index error
         if index == len(df) - 1:
-            break
-        if d < w:
-            d = d + 1
-            index = index + 1
+            continue
+        if index < (w - 1):
+            continue
         else:
             s = [None] * w
             for i in range(w):
-                s[i] = df.loc[d - w + i]["True Label"]
+                s[i] = df.loc[(index - (w - 1)) + i]["True Label"]
             # create key in w_dict if doesnt exist
-            if w_dict.get(str(s), None) == None:
+            if w_dict.get(str(s)) == None:
                 w_dict[str(s)] = []
             w_dict[str(s)].append(df.loc[index + 1]["True Label"])
     for key in w_dict.keys():
@@ -187,13 +186,14 @@ def get_training_dict(df, w):
             else:
                 num_neg = num_neg + 1
         if num_pos > num_neg:
-            w_reducted_dict[new_key] = "+"
+            w_reduced_dict[new_key] = "+"
         elif num_neg > num_pos:
-            w_reducted_dict[new_key] = "-"
+            w_reduced_dict[new_key] = "-"
         else:
-            w_reducted_dict[new_key] = "+"
+            w_reduced_dict[new_key] = "+"
 
-    return w_reducted_dict
+    return w_reduced_dict
+
 
 # Function for predicting the next label
 def predict_next_label(w, testing_df, training_df, ticker):
@@ -203,8 +203,10 @@ def predict_next_label(w, testing_df, training_df, ticker):
     predictions = []
     d = 1
     index = testing_df.index[0]
-    num_correct = 0
-    num_incorrect = 0
+    num_pos_correct = 0
+    num_neg_correct = 0
+    num_pos_incorrect = 0
+    num_neg_incorrect = 0
 
     while index < len(testing_df) + testing_df.index[0]:
         # preventing key error from viewing indexs outside dataset (in beginning 3)
@@ -217,22 +219,46 @@ def predict_next_label(w, testing_df, training_df, ticker):
             for i in range(w):
                 s[i] = testing_df.loc[index - i]["True Label"]
             index = index + 1
-            symbol = s[-1]
-            num_consecutive = 1
             key = ""
             for i in s:
                 key = key + i
-            prediction = training_w.get(key, "+") # default to + if we cannot find key
+            prediction = training_w.get(key, "+")  # default to + if we cannot find key
             predictions.append(prediction)
             # Preventing key error from trying to predict the next label outside the dataset
             if index + 1 < len(testing_df.index) + testing_df.index[0]:
                 if prediction == testing_df.loc[index + 1]["True Label"]:
-                    num_correct = num_correct + 1
+                    if prediction == "+":
+                        num_pos_correct = num_pos_correct + 1
+                    else:
+                        num_neg_correct = num_neg_correct + 1
                 else:
-                    num_incorrect = num_incorrect + 1
-    accuracy = round((num_correct / len(testing_df)) * 100, 2)
-    print("Accuracy = " + str(accuracy) + "%")
-    accuracy_dict[ticker]["w=" + str(w)] = accuracy
+                    if prediction == "+":
+                        num_pos_incorrect = num_pos_incorrect + 1
+                    else:
+                        num_neg_incorrect = num_neg_incorrect + 1
+    accuracy_overall = round(
+        (
+            (num_pos_correct + num_neg_correct)
+            / (
+                num_pos_correct
+                + num_neg_correct
+                + num_pos_incorrect
+                + num_neg_incorrect
+            )
+        )
+        * 100,
+        2,
+    )
+    accuracy_pos = round(
+        (num_pos_correct / (num_pos_correct + num_pos_incorrect)) * 100, 2
+    )
+    accuracy_neg = round(
+        (num_neg_correct / (num_neg_correct + num_neg_incorrect)) * 100, 2
+    )
+    print("Accuracy Overall = " + str(accuracy_overall) + "%")
+    print("Accuracy '+' = " + str(accuracy_pos) + "%")
+    print("Accuracy '-' = " + str(accuracy_neg) + "%")
+    accuracy_dict[ticker]["w=" + str(w)] = accuracy_overall
     return predictions
 
 
@@ -245,15 +271,21 @@ def predict_next_label(w, testing_df, training_df, ticker):
 # ===========================
 
 print("For SUN with w=2")
-sun_w_2_predictions = predict_next_label(w=2, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN")
+sun_w_2_predictions = predict_next_label(
+    w=2, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN"
+)
 print("------------------")
 
 print("For SUN with w=3")
-sun_w_3_predictions = predict_next_label(w=3, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN")
+sun_w_3_predictions = predict_next_label(
+    w=3, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN"
+)
 print("------------------")
 
 print("For SUN with w=4")
-sun_w_4_predictions = predict_next_label(w=4, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN")
+sun_w_4_predictions = predict_next_label(
+    w=4, testing_df=testing_set_sun, training_df=training_set_sun, ticker="SUN"
+)
 print("------------------")
 
 # ===========================
@@ -261,17 +293,22 @@ print("------------------")
 # ===========================
 
 print("For SPY with w=2")
-spy_w_2_predictions = predict_next_label(w=2, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY")
+spy_w_2_predictions = predict_next_label(
+    w=2, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY"
+)
 print("------------------")
 
 print("For SPY with w=3")
-spy_w_3_predictions = predict_next_label(w=3, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY")
+spy_w_3_predictions = predict_next_label(
+    w=3, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY"
+)
 print("------------------")
 
 print("For SPY with w=4")
-spy_w_4_predictions = predict_next_label(w=4, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY")
+spy_w_4_predictions = predict_next_label(
+    w=4, testing_df=testing_set_spy, training_df=training_set_spy, ticker="SPY"
+)
 print("------------------")
-exit()
 
 # ===========================
 # Question #3
@@ -315,7 +352,15 @@ def ensemble_stats(ensemble_df, testing_df, ticker):
         + ":"
         + str(num_neg_incorrect)
     )
-    print("Accuracy             -- " + str(accuracy) + "%")
+    print(
+        "Accuracy (pos:neg) -- "
+        + str(round((num_pos_correct / (num_pos_correct + num_pos_incorrect)) * 100, 2))
+        + "%"
+        + "  :  "
+        + str(round((num_neg_correct / (num_neg_correct + num_neg_incorrect)) * 100, 2))
+        + "%"
+    )
+    print("Accuracy (overall) -- " + str(accuracy) + "%")
 
 
 # Creating a new DF to hold values for ensemble learning
@@ -327,9 +372,11 @@ ensemble_df_sun = pd.DataFrame(
         "w=4": sun_w_4_predictions,
     }
 )
+
 ensemble_df_sun["ensemble"] = ensemble_df_sun.apply(
     lambda row: calculate_ensemble(row), axis=1
 )
+
 ensemble_df_spy = pd.DataFrame(
     {
         "w=2": spy_w_2_predictions[2:],
