@@ -10,6 +10,7 @@ import pandas as pd
 import os
 import math
 import ast
+import matplotlib.pyplot as plt
 
 # Ticker file location
 ticker_file_sun = r"data\\SUN.csv"
@@ -464,3 +465,56 @@ print("========== SUN ==========")
 calculate_stats(ensemble_df_sun, testing_set_sun, "SUN")
 print("========== SPY ==========")
 calculate_stats(ensemble_df_spy, testing_set_spy, "SPY")
+
+# ===========================
+# Question #5
+# ===========================
+
+
+def trade_stock(method):
+    re_index_testing_df = testing_set_sun.copy().reset_index(drop=True)
+    re_index_predictions = ensemble_df_sun[method].values.tolist()
+    money = 100
+    earnings_arr = []
+
+    for index, row in re_index_testing_df.iterrows():
+        if index < 3:
+            continue
+        else:
+            if index < len(re_index_predictions) - 1:
+                if row["True Label"] == re_index_predictions[index]:
+                    if re_index_predictions[index] == "+":
+                        money = money + (money * row["Return"])
+                    else:
+                        money = money
+                else:
+                    if re_index_predictions[index] == "+":
+                        money = money + (money * row["Return"])
+                    else:
+                        money = money
+                earnings_arr.append(money)
+    plt.plot(earnings_arr, label=method)
+    return earnings_arr
+
+def buy_and_hold_stock():
+    re_index_testing_df = testing_set_sun.copy().reset_index(drop=True)
+    money = 100
+    earnings_arr = []
+
+    for index, row in re_index_testing_df.iterrows():
+        if index < len(re_index_testing_df) - 1:
+            if re_index_testing_df.loc[index + 1]["True Label"] == "+":
+                money = money + (money * row["Return"])
+            else:
+                money = money + (money * row["Return"])
+            earnings_arr.append(money)
+    plt.plot(earnings_arr, label="buy and hold")
+
+trade_stock("w=2")
+trade_stock("w=3")
+trade_stock("w=4")
+trade_stock("ensemble")
+buy_and_hold_stock()
+
+plt.legend()
+plt.show()
