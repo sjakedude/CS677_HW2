@@ -60,7 +60,7 @@ For SPY with w=4\par
 Accuracy Overall = 55.42%\par
 Accuracy '+' = 62.5%\par
 Accuracy '-' = 49.25%\par
-\b 3.\b0  For my SUN stock, when w=2 gave me the highest accuracy of 54.09%. This does not make sense to me because the more data you have to consider, the more accurate I would think the predictions would be. As for the SPY stock, I noticed that the highest accuracy was when w=2 with a accuracy of 56.8%. This too surprised me because I would assume that the higher the value of w, the higher the accuracy of the prediction, but that was not the case for the SPY or SUN stock.\par
+\b 3.\b0  For my SUN stock, when w=2 gave me the highest accuracy of 54.09%. This does not make sense to me because the more data you have to consider, the more accurate I would think the predictions would be. As for the SPY stock, I noticed that the highest accuracy was when w=2 with an accuracy of 56.8%. This too surprised me because I would assume that the higher the value of w, the higher the accuracy of the prediction, but that was not the case for the SPY or SUN stock.\par
 \ul\b Question 3:\ulnone\b0\par
 \b 1. \b0 Done\par
 \b 2.\b0\par
@@ -76,8 +76,8 @@ Correct    (pos:neg) -- 110:68\par
 Incorrect  (pos:neg) -- 150:172\par
 Accuracy (pos:neg) -- 42.31%  :  28.33%\par
 Accuracy (overall) -- 35.6%\par
-\b 3.\b0  No my accuracy did not improve for - predictions. Especially for the SPY stock, with the accuracy being 28.33%. I believe this is due to the fact that there are a lot less 'down days' for SPY. The vast majority of days for SPY are 'up days', so I think the model has a hard time predicting the right - value because the ensamble is + the majority of the time. For SUN it seemed to be a little better at 39.52%, but not better than the accuracy for w=2,3,4.\par
-\b 4.\b0  As for my + predictions for ensemble, for the SUN stock it was 51.2% accurate which is right around the total accuracy for w=2,3,4 but it still was not better. Same goes for the ensemble for the SPY stock. With a accuracy of 42.31%, its not awful but the w=2,3,4 predictions were still much better than the ensemble. Maybe with more testing data the accuracy of ensemble would improve.\par
+\b 3.\b0  No, my accuracy did not improve for - predictions. Especially for the SPY stock, with the accuracy being 28.33%. I believe this is due to the fact that there are a lot less 'down days' for SPY. The vast majority of days for SPY are 'up days', so I think the model has a hard time predicting the right - value because the ensemble is + the majority of the time. For SUN, it seemed to be a little better at 39.52%, but not better than the accuracy for w=2,3,4.\par
+\b 4.\b0  As for my + predictions for ensemble, for the SUN stock it was 51.2% accurate which is right around the total accuracy for w=2,3,4, but it still was not better. The same goes for the ensemble for the SPY stock. With an accuracy of 42.31%, it's not awful, but the w=2,3,4 predictions were still much better than the ensemble. Maybe with more testing data, the accuracy of ensemble would improve.\par
 \ul\b Question 4:\ulnone\b0\par
 \b 1 - 6.\b0  Done\par
 \b 7. \b0\par
@@ -13430,7 +13430,10 @@ bac9c9c9cbcbcbbfbfbf8e8e8e3e3e3e202020383838a9a9a9b6b6b64949492121211e1e1e1e1e
 1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e
 1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e030000000000
 }\par
-\b 8.\b0  I think its very interesting that for both stock, there was not 1 single true negative for w=2. I believe this is because 'down days' are less common than 'up days' but the number was still surprising to me. Also for the SPY stock, where w=4 the TNR, which is the rate of true negatives was actually pretty good, being 0.67. Much better than w=2 with a TNR of 0. I am also noticing that the TPR, the rate of true positives for the SUN stock is pretty high for the ensemble, being 0.75, thats the highest TPR in the chart. \par
+\b 8.\b0  I think it's very interesting that for both stock, there was not 1 single true negative for w=2. I believe this is because 'down days' are less common than 'up days' but the number was still surprising to me. Also, for the SPY stock, where w=4 the TNR, which is the rate of true negatives, was actually pretty good, being 0.67. Much better than w=2 with a TNR of 0. I am also noticing that the TPR, the rate of true positives for the SUN stock is pretty high for the ensemble, being 0.75, that's the highest TPR in the chart.\par
+\ul\b Question 5:\ulnone\b0\par
+\b 1.\b0  The results on the graph are very interesting to me. When w is equal to 2 and 3 and ensemble and buy and hold, the trends all seem to be around the same area. With ensemble being the best of that group by a little. But what is strange is how much better w=4 performed compared to the rest of the methods. W=4 is the obvious choice if you were to trade this stock. However, I do not believe that w=4 is telling the full story here, due to the fact that we are only dealing with 2 years of data, I believe that it was just a lucky chance that the oracle for w=4 just happened to select high return up days to sell. I believe that if I ran this same test over the course of 10 or 20 years of SUN stock, the predictions would all be pretty close to each other. As for the buy and hold method, this method was still better than going with w=2 or w=3, but I was not shocked to see that the ensemble predictions did better than buy and hold. I had a feeling that ensemble would be one of the best methods because it took into consideration all values of w, and I believe if I calculated more values of w, for w=5,6,7, etc. the ensemble would be ever better at predicting the correct label.\par
+\b 2. \b0 As for differences between the years 4 and 5, it is clear to me that during the year 4, all methods just slowly climbed and all stayed around the same value of money. But when year 5 hit, there seemed to be a bit of a crash for the SUN market because all methods of trading clearly show a down spike around day 300, then a rise shortly after that.\par
 
 \pard\sa200\sl276\slmult1\par
 \par

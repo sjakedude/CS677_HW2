@@ -503,10 +503,7 @@ def buy_and_hold_stock():
 
     for index, row in re_index_testing_df.iterrows():
         if index < len(re_index_testing_df) - 1:
-            if re_index_testing_df.loc[index + 1]["True Label"] == "+":
-                money = money + (money * row["Return"])
-            else:
-                money = money + (money * row["Return"])
+            money = money + (money * row["Return"])
             earnings_arr.append(money)
     plt.plot(earnings_arr, label="buy and hold")
 
@@ -515,6 +512,7 @@ trade_stock("w=3")
 trade_stock("w=4")
 trade_stock("ensemble")
 buy_and_hold_stock()
-
+plt.xlabel("Day")
+plt.ylabel("Money")
 plt.legend()
 plt.show()
